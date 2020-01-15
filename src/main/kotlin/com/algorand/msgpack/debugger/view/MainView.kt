@@ -39,7 +39,7 @@ class MainView : View("Message Pack Debugger") {
                     calculateColors(it.children, matches[0].children)
                 }
 
-                // If there are one or zero matches, set them all to the mismatch color
+                // If there are more than 1 or zero matches, set them all to the mismatch color
                 else {
                     it.color = mismatch
                     setAll(mismatch, it.children)
