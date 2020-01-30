@@ -2,6 +2,7 @@ package com.algorand.msgpack.debugger.view
 
 import com.algorand.algosdk.util.Encoder
 import com.algorand.msgpack.debugger.app.Styles
+import com.algorand.msgpack.debugger.app.unpack
 import com.algorand.msgpack.debugger.models.*
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.control.TreeItem
@@ -51,16 +52,18 @@ class MainView : View("Message Pack Debugger") {
         fun makeTreeStringProperty(treeGroup: Group, other: Group) = SimpleStringProperty().apply {
                 onChange {
                     try {
-                        val map = Encoder.decodeFromMsgPack(Encoder.decodeFromBase64(it), Map::class.java)
-                        val updatedGroup = mapToRootChildren(map)
-                        calculateColors(updatedGroup, other.children)
-                        treeGroup.children.clear()
-                        treeGroup.children.addAll(updatedGroup)
+                        it?.let {
+                            val map = unpack(it)
+                            val updatedGroup = mapToRootChildren(map)
+                            calculateColors(updatedGroup, other.children)
+                            treeGroup.children.clear()
+                            treeGroup.children.addAll(updatedGroup)
 
-                        // Trigger a change in the other one.
-                        val group = Group("")
-                        other.children.add(group)
-                        other.children.remove(group)
+                            // Trigger a change in the other one.
+                            val group = Group("")
+                            other.children.add(group)
+                            other.children.remove(group)
+                        }
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -100,6 +103,7 @@ class MainView : View("Message Pack Debugger") {
     fun makeMsgpackView(str: SimpleStringProperty, group: Group) = vbox {
             textfield(str)
             treeview(TreeItem(group)) {
+                isShowRoot = false
                 root.isExpanded = true
                 cellFormat {
                     text = it.name
