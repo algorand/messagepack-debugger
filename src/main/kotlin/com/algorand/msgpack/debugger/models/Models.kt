@@ -16,7 +16,6 @@ fun mapToRootChildren(map: Map<*,*>): MutableList<Group> {
     return anyToGroupList(map)
 }
 
-
 private fun anyToGroup(any: Any?): Group {
     return when(any) {
         is Map.Entry<*, *> -> {
@@ -40,6 +39,13 @@ private fun anyToGroupList(any: Any?): MutableList<Group> {
         is Map<*,*> -> {
             //println("anyToGroupList Map-> $any, ${any?.javaClass?.kotlin?.simpleName}")
             any.entries
+                    .map { anyToGroup(it) }
+                    .toObservable()
+        }
+        // i.e. lsig args
+        is Collection<*> -> {
+            //println("anyToGroupList Collection-> $any, ${any?.javaClass?.kotlin?.simpleName}")
+            any
                     .map { anyToGroup(it) }
                     .toObservable()
         }
