@@ -1,6 +1,5 @@
 package com.algorand.msgpack.debugger.view
 
-import com.algorand.algosdk.util.Encoder
 import com.algorand.msgpack.debugger.app.Styles
 import com.algorand.msgpack.debugger.app.unpack
 import com.algorand.msgpack.debugger.models.*
@@ -15,18 +14,19 @@ import javafx.scene.layout.Priority
 import javafx.scene.paint.Color
 import tornadofx.*
 
-data class TreeData (
-        val teeGroup: Group,
-        val string: SimpleStringProperty
-)
-
 class MainView : View("Message Pack Debugger") {
-    val comparisonMode = SimpleBooleanProperty(false)
+    val comparisonMode = SimpleBooleanProperty(app.parameters.raw.size == 2)
     val leftTreeGroup = Group("root", mapToRootChildren(mapOf<Any,Any>()))
     val rightTreeGroup = Group("root", mapToRootChildren(mapOf<Any,Any>()))
     val leftString = makeTreeStringProperty(leftTreeGroup, rightTreeGroup)
     val rightString = makeTreeStringProperty(rightTreeGroup, leftTreeGroup)
     lateinit var viewBox: HBox
+
+    init {
+        // Apply them here instead of the initializer to make sure the bindings trigger
+        leftString.value = app.parameters.raw.getOrNull(0)
+        rightString.value = app.parameters.raw.getOrNull(1)
+    }
 
     // Static functions
     companion object {
@@ -115,7 +115,7 @@ class MainView : View("Message Pack Debugger") {
      */
     fun makeMsgpackView(str: SimpleStringProperty, group: Group, isVisiblePredicate: () -> ObservableValue<Boolean> = { SimpleBooleanProperty(true) }) = vbox {
             hgrow = Priority.ALWAYS
-            hiddenWhen(isVisiblePredicate().toBinding().not())
+            visibleWhen(isVisiblePredicate)
             managedWhen(isVisiblePredicate) // Hidden tree will take up space if managed.
 
             textfield(str)
@@ -143,7 +143,7 @@ class MainView : View("Message Pack Debugger") {
                 checkbox("Comparison Mode", comparisonMode) {
                     contentDisplay = ContentDisplay.RIGHT
                     action {
-                        if (isSelected) {
+                        if (comparisonMode.value) {
                             calculateColors(leftTreeGroup.children, rightTreeGroup.children)
                         } else {
                             calculateColors(leftTreeGroup.children, leftTreeGroup.children)
