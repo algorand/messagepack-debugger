@@ -27,6 +27,10 @@ private fun anyToGroup(any: Any?): Group {
             }
             g
         }
+        is ByteArray -> {
+            println("anyToGroup ByteArray-> $any, ${any?.javaClass?.kotlin?.simpleName}")
+            Group(Encoder.encodeToBase64(any))
+        }
         else -> {
             //println("anyToGroup ELSE -> $any, ${any?.javaClass?.kotlin?.simpleName}")
             Group (any.toString())
