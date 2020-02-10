@@ -4,16 +4,26 @@ import com.algorand.algosdk.util.Encoder
 import com.algorand.msgpack.debugger.app.Styles
 import com.algorand.msgpack.debugger.app.unpack
 import com.algorand.msgpack.debugger.models.*
+import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleStringProperty
+import javafx.beans.value.ObservableValue
 import javafx.scene.control.TreeItem
+import javafx.scene.layout.HBox
+import javafx.scene.layout.Priority
 import javafx.scene.paint.Color
 import tornadofx.*
+
+data class TreeData (
+        val teeGroup: Group,
+        val string: SimpleStringProperty
+)
 
 class MainView : View("Message Pack Debugger") {
     val leftTreeGroup = Group("root", mapToRootChildren(mapOf<Any,Any>()))
     val rightTreeGroup = Group("root", mapToRootChildren(mapOf<Any,Any>()))
     val leftString = makeTreeStringProperty(leftTreeGroup, rightTreeGroup)
     val rightString = makeTreeStringProperty(rightTreeGroup, leftTreeGroup)
+    lateinit var viewBox: HBox
 
     // Static functions
     companion object {
@@ -100,7 +110,11 @@ class MainView : View("Message Pack Debugger") {
      * |                    |                    |
      * -------------------------------------------
      */
-    fun makeMsgpackView(str: SimpleStringProperty, group: Group) = vbox {
+    fun makeMsgpackView(str: SimpleStringProperty, group: Group, hiddenPredicate: () -> ObservableValue<Boolean> = { SimpleBooleanProperty(false) }) = vbox {
+            hgrow = Priority.ALWAYS
+            hiddenWhen(hiddenPredicate)
+            managedWhen(hiddenPredicate().toBinding().not()) // Hidden tree will take up space if managed.
+
             textfield(str)
             treeview(TreeItem(group)) {
                 isShowRoot = false
@@ -120,9 +134,9 @@ class MainView : View("Message Pack Debugger") {
         label(title) {
             addClass(Styles.heading)
         }
-        hbox {
+        viewBox = hbox {
             this += makeMsgpackView(leftString, leftTreeGroup)
-            this += makeMsgpackView(rightString, rightTreeGroup)
+            this += makeMsgpackView(rightString, rightTreeGroup) { leftString.isEmpty }
         }
     }
 }
