@@ -7,6 +7,8 @@ import com.algorand.msgpack.debugger.models.*
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.beans.value.ObservableValue
+import javafx.geometry.Pos
+import javafx.scene.control.ContentDisplay
 import javafx.scene.control.TreeItem
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Priority
@@ -19,6 +21,7 @@ data class TreeData (
 )
 
 class MainView : View("Message Pack Debugger") {
+    val comparisonMode = SimpleBooleanProperty(false)
     val leftTreeGroup = Group("root", mapToRootChildren(mapOf<Any,Any>()))
     val rightTreeGroup = Group("root", mapToRootChildren(mapOf<Any,Any>()))
     val leftString = makeTreeStringProperty(leftTreeGroup, rightTreeGroup)
@@ -110,10 +113,10 @@ class MainView : View("Message Pack Debugger") {
      * |                    |                    |
      * -------------------------------------------
      */
-    fun makeMsgpackView(str: SimpleStringProperty, group: Group, hiddenPredicate: () -> ObservableValue<Boolean> = { SimpleBooleanProperty(false) }) = vbox {
+    fun makeMsgpackView(str: SimpleStringProperty, group: Group, isVisiblePredicate: () -> ObservableValue<Boolean> = { SimpleBooleanProperty(true) }) = vbox {
             hgrow = Priority.ALWAYS
-            hiddenWhen(hiddenPredicate)
-            managedWhen(hiddenPredicate().toBinding().not()) // Hidden tree will take up space if managed.
+            hiddenWhen(isVisiblePredicate().toBinding().not())
+            managedWhen(isVisiblePredicate) // Hidden tree will take up space if managed.
 
             textfield(str)
             treeview(TreeItem(group)) {
@@ -131,12 +134,27 @@ class MainView : View("Message Pack Debugger") {
         }
 
     override val root = vbox {
-        label(title) {
-            addClass(Styles.heading)
+        hbox {
+            label(title) {
+                addClass(Styles.heading)
+            }
+            vbox {
+                alignment = Pos.CENTER
+                checkbox("Comparison Mode", comparisonMode) {
+                    contentDisplay = ContentDisplay.RIGHT
+                    action {
+                        if (isSelected) {
+                            calculateColors(leftTreeGroup.children, rightTreeGroup.children)
+                        } else {
+                            calculateColors(leftTreeGroup.children, leftTreeGroup.children)
+                        }
+                    }
+                }
+            }
         }
         viewBox = hbox {
             this += makeMsgpackView(leftString, leftTreeGroup)
-            this += makeMsgpackView(rightString, rightTreeGroup) { leftString.isEmpty }
+            this += makeMsgpackView(rightString, rightTreeGroup) { comparisonMode }
         }
     }
 }
