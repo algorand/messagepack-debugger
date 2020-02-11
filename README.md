@@ -2,8 +2,16 @@
 
 View and compare messagepack encoded objects. Put the file path or base64 encoded MessagePack objects into the text fields and they will be displayed as a tree with any differences highlighted red.
 
+# Dependencies
+
+Java 12 or higher.
+JavaFX 13 or higher.
+
+Honestly, your best bet is probably to install the latest version of Java / Maven and build tha artifact yourself.
+
+
 # Usage
-Run with **java -jar**:
+Download the jar file from the releases tab and run with **java -jar**:
 ```
 ~$ java -jar messagepack-debugger.jar
 ```
@@ -50,8 +58,7 @@ mvn compile javafx:run
 
 # Artifacts
 
-To build a jar with bundled dependencies:
+To build a jar with bundled dependencies. After the build finishes you should have a new file at **target/messagepack-debugger-<VERSION>-jar-with-dependencies.jar**:
 ```
 mvn package
 ```
-
