@@ -8,10 +8,12 @@ import org.msgpack.jackson.dataformat.MessagePackFactory
 import java.io.ByteArrayInputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.regex.Matcher
 
 // The input could be a base64 encoded string or a file path with bytes that need encoding or base64 data.
 private fun getDataFromInput(str: String): String {
-    return if (Files.exists(Path.of(str))) {
+    val p = Path.of(str)
+    return if (Files.isReadable(p)) {
         val fileData = Files.readAllBytes(Path.of(str))
         val stringValue = fileData.toString(Charsets.UTF_8)
         if (Base64.isBase64(stringValue)) {

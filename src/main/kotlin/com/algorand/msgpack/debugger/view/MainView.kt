@@ -2,10 +2,13 @@ package com.algorand.msgpack.debugger.view
 
 import com.algorand.msgpack.debugger.app.Styles
 import com.algorand.msgpack.debugger.app.unpack
-import com.algorand.msgpack.debugger.models.*
+import com.algorand.msgpack.debugger.models.Group
+import com.algorand.msgpack.debugger.models.mapToRootChildren
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleStringProperty
+import javafx.beans.value.ObservableBooleanValue
 import javafx.beans.value.ObservableValue
+import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.control.ContentDisplay
 import javafx.scene.control.TreeItem
@@ -18,8 +21,8 @@ class MainView : View("Message Pack Debugger") {
     val comparisonMode = SimpleBooleanProperty(app.parameters.raw.size == 2)
     val leftTreeGroup = Group("root", mapToRootChildren(mapOf<Any,Any>()))
     val rightTreeGroup = Group("root", mapToRootChildren(mapOf<Any,Any>()))
-    val leftString = makeTreeStringProperty(leftTreeGroup, rightTreeGroup)
-    val rightString = makeTreeStringProperty(rightTreeGroup, leftTreeGroup)
+    val leftString = makeTreeStringProperty(leftTreeGroup, rightTreeGroup, comparisonMode)
+    val rightString = makeTreeStringProperty(rightTreeGroup, leftTreeGroup, comparisonMode)
     lateinit var viewBox: HBox
 
     init {
@@ -30,7 +33,13 @@ class MainView : View("Message Pack Debugger") {
 
     // Static functions
     companion object {
-        fun calculateColors(left: List<Group>, right:List<Group>) {
+        private fun refresh(grp: MutableList<Group>) {
+            val group = Group("")
+            grp.add(group)
+            grp.remove(group)
+        }
+
+        fun calculateColors(left: MutableList<Group>, right:MutableList<Group>) {
             fun setAll(c: Color, grp: List<Group>) {
                 grp.forEach {
                     it.color = c
@@ -60,22 +69,22 @@ class MainView : View("Message Pack Debugger") {
                     setAll(mismatch, matches)
                 }
             }
+
+            refresh(left)
+            refresh(right)
         }
 
-        fun makeTreeStringProperty(treeGroup: Group, other: Group) = SimpleStringProperty().apply {
+        fun makeTreeStringProperty(treeGroup: Group, other: Group, comparisonMode: ObservableBooleanValue) = SimpleStringProperty().apply {
                 onChange {
                     try {
                         it?.let {
                             val map = unpack(it)
                             val updatedGroup = mapToRootChildren(map)
-                            calculateColors(updatedGroup, other.children)
+                            if (comparisonMode.get()) {
+                                calculateColors(updatedGroup, other.children)
+                            }
                             treeGroup.children.clear()
                             treeGroup.children.addAll(updatedGroup)
-
-                            // Trigger a change in the other one.
-                            val group = Group("")
-                            other.children.add(group)
-                            other.children.remove(group)
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -120,6 +129,7 @@ class MainView : View("Message Pack Debugger") {
 
             textfield(str)
             treeview(TreeItem(group)) {
+                vgrow = Priority.ALWAYS
                 isShowRoot = false
                 root.isExpanded = true
                 cellFormat {
@@ -139,9 +149,12 @@ class MainView : View("Message Pack Debugger") {
                 addClass(Styles.heading)
             }
             vbox {
-                alignment = Pos.CENTER
+                hgrow = Priority.ALWAYS
+                alignment = Pos.CENTER_RIGHT
                 checkbox("Comparison Mode", comparisonMode) {
+                    alignment = Pos.CENTER_RIGHT
                     contentDisplay = ContentDisplay.RIGHT
+                    padding = Insets(15.0)
                     action {
                         if (comparisonMode.value) {
                             calculateColors(leftTreeGroup.children, rightTreeGroup.children)
@@ -153,6 +166,7 @@ class MainView : View("Message Pack Debugger") {
             }
         }
         viewBox = hbox {
+            vgrow = Priority.ALWAYS
             this += makeMsgpackView(leftString, leftTreeGroup)
             this += makeMsgpackView(rightString, rightTreeGroup) { comparisonMode }
         }
