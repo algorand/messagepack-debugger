@@ -39,7 +39,7 @@ class MainView : View("Message Pack Debugger") {
             grp.remove(group)
         }
 
-        fun calculateColors(left: MutableList<Group>, right:MutableList<Group>) {
+        fun calculateColorsRecurse(left: MutableList<Group>, right:MutableList<Group>): Color {
             fun setAll(c: Color, grp: List<Group>) {
                 grp.forEach {
                     it.color = c
@@ -48,27 +48,56 @@ class MainView : View("Message Pack Debugger") {
             }
 
             val mismatch = Color.RED
+            val unordered = Color.YELLOW
             val match = Color.WHITE
 
             // Set all from the right group to mismatch so that we don't have to check for things in right but not left.
             setAll(mismatch, right)
+            var result = match
 
+            var idx = 0;
             left.forEach {
                 // If there is a single match, set the color to the match color
                 val matches = right.filter {other -> it.name.equals(other.name) }.toList()
                 if (matches.size == 1) {
-                    it.color = match
-                    matches[0].color = match
-                    calculateColors(it.children, matches[0].children)
+                    var color = if (right[idx]?.name?.equals(it.name) ?: false) {
+                        match
+                    } else {
+                        unordered
+                    }
+
+                    // Bubble up errors for matched fields.
+                    val childColor = calculateColorsRecurse(it.children, matches[0].children)
+
+                    // Set current node to most severe color between children, and the current node.
+                    if (color == match || childColor == mismatch) {
+                        color = childColor
+                    }
+
+                    // Update the result to the most severe color.
+                    if (color != match && result != mismatch) {
+                        result = color
+                    }
+
+                    it.color = color
+                    matches[0].color = color
                 }
 
                 // If there are more than 1 or zero matches, set them all to the mismatch color
                 else {
+                    result = mismatch
                     it.color = mismatch
                     setAll(mismatch, it.children)
                     setAll(mismatch, matches)
                 }
+                idx++
             }
+
+            return result
+        }
+
+        fun calculateColors(left: MutableList<Group>, right:MutableList<Group>) {
+            calculateColorsRecurse(left, right)
 
             refresh(left)
             refresh(right)

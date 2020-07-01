@@ -45,6 +45,7 @@ java -jar target/messagepack-debugger.jar \
 # Screenshot
 ![Screenshot showing a single transaction file being inspected](/screenshots/load_file.png?raw=true "Screenshot showing a single transaction file being inspected")
 ![Screenshot showing different objects loaded](/screenshots/file_and_base64_string.png?raw=true "Screenshot showing different objects loaded")
+![Screenshot showing an unordered comparison](/screenshots/unordered.png?raw=true "Screenshot showing an unordered comparison")
 ![Screenshot showing transaction groups](/screenshots/compare_transaction_group_files.png?raw=true "Screenshot showing transaction groups")
 
 
